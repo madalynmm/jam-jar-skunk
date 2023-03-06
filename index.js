@@ -1,16 +1,15 @@
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
-// is this needed?
 const consoleTable = require("console.table");
 const db = mysql.createConnection(
   {
     host: 'localhost',
     user: 'root',
     // TODO: Add MySQL Password & look up way to hide it
-    password: 'toulouse',
+    password: '',
     database: 'employees_db'
   },
-  console.log(`Connected to the employees_db database.`)
+  console.log('Connected to the employees_db database.')
 );
 
 console.log(
@@ -73,7 +72,54 @@ function appRun() {
     }, 5000); 
   }
 
-  // function addRole()
+  function addRole() {
+    db.query('SELECT name FROM department', function (err, results) {
+      if (err) throw err;
+      inquirer.prompt([
+        {
+          type: 'input',
+          name: 'roleName',
+          message: "What is the name of the role?",
+          validate: (answer) => {
+            if (answer !== '') {
+              return true;
+            }
+            return 'Please enter at least one character.';
+          }
+        },
+        {
+          type: 'input',
+          name: 'roleSalary',
+          message: "What is the salary of the role?",
+          validate: (answer) => {
+            const pass = answer.match(/^[1-9]\d*$/);
+            if (pass) {
+              return true;
+            }
+            return 'Please enter a positive number greater than zero.';
+          },
+        },
+        {
+          type: 'list',
+          name: 'dept',
+          message: "What department does the role belong to?",
+          choices: results,
+        }
+      ])
+      .then((answers) => {
+        db.query(`SELECT id FROM department WHERE name = '${answers.dept}'`, function (err, results) {
+          db.query(`INSERT INTO roles (title, salary, department_id) VALUES ('${answers.roleName}', '${answers.roleSalary}', '${results[0].id}')`, function (err, results) {
+            if (err) throw err;
+            console.log(`"Added ${answers.roleName} to ${answers.dept}."`);
+          })
+          setTimeout(() => {
+            mainMenu();
+          }, 1000);      
+        })
+      })
+    });
+  }
+
 
   function viewDepartments() {
     db.query('SELECT * FROM department', function (err, results) {
@@ -100,12 +146,14 @@ function appRun() {
       },
     ])
     .then((answer) => {
-      db.query(`INSERT INTO department (name) VALUES ('${answer.newDepartment}')`, function (err, answer) {
+      const newDeptName = answer.newDepartment;
+      db.query(`INSERT INTO department (name) VALUES ('${newDeptName}')`, function (err, results) {
         if (err) throw err;
+        console.log(`"Added ${newDeptName} department."`);
       })
       setTimeout(() => {
         mainMenu();
-      }, 5000);    
+      }, 1000);      
     })
   }
 
