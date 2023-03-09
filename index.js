@@ -1,16 +1,15 @@
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
 const consoleTable = require("console.table");
-const db = mysql.createConnection(
-  {
-    host: 'localhost',
-    user: 'root',
-    // TODO: Add MySQL Password & look up way to hide it
-    password: 'toulouse',
-    database: 'employees_db'
-  },
-  console.log('Connected to the employees_db database.')
-);
+require('dotenv').config();
+
+const db = mysql.createConnection({
+  host: process.env.HOST,
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD
+});
+console.log('Connected to the employees_db database.');
 
 console.log(
   '\nEmployee Manager\n'
